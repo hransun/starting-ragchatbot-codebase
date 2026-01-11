@@ -264,4 +264,38 @@ class VectorStore:
             return None
         except Exception as e:
             print(f"Error getting lesson link: {e}")
+
+    def get_course_outline(self, course_name: str) -> Optional[Dict[str, Any]]:
+        """
+        Get course outline by name (supports fuzzy matching).
+
+        Returns dict with: title, course_link, instructor, lessons (list of {lesson_number, lesson_title})
+        """
+        import json
+
+        # Resolve course name using fuzzy matching
+        course_title = self._resolve_course_name(course_name)
+        if not course_title:
+            return None
+
+        try:
+            results = self.course_catalog.get(ids=[course_title])
+            if results and results['metadatas']:
+                metadata = results['metadatas'][0]
+                lessons = []
+                if metadata.get('lessons_json'):
+                    lessons = json.loads(metadata['lessons_json'])
+
+                return {
+                    "title": metadata.get('title'),
+                    "course_link": metadata.get('course_link'),
+                    "instructor": metadata.get('instructor'),
+                    "lessons": [
+                        {"lesson_number": l.get('lesson_number'), "lesson_title": l.get('lesson_title')}
+                        for l in lessons
+                    ]
+                }
+        except Exception as e:
+            print(f"Error getting course outline: {e}")
+        return None
     
