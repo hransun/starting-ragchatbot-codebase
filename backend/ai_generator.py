@@ -148,4 +148,6 @@ All responses must be:
         
         # Get final response
         final_response = self.client.messages.create(**final_params)
-        return final_response.content[0].text
+        if final_response.content:
+            return final_response.content[0].text
+        return "Unable to generate a response."
