@@ -1,0 +1,21 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(export PATH=\"$HOME/.local/bin:$PATH\")",
+      "Bash(uv run:*)",
+      "mcp__playwright__browser_navigate",
+      "mcp__playwright__browser_wait_for",
+      "Bash(python -m uvicorn:*)",
+      "mcp__playwright__browser_take_screenshot",
+      "mcp__playwright__browser_evaluate",
+      "Bash(/c/repo/starting-ragchatbot-codebase/.venv/Scripts/python.exe -m uvicorn:*)",
+      "Bash(/c/repo/starting-ragchatbot-codebase/.venv/Scripts/python.exe -m pytest tests/ -v)",
+      "Bash(/c/repo/starting-ragchatbot-codebase/.venv/Scripts/pip.exe install:*)",
+      "Bash(uv add:*)",
+      "Bash(/c/Users/hrans/.local/bin/uv add pytest --dev)",
+      "Bash(/c/repo/starting-ragchatbot-codebase/.venv/Scripts/python.exe:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)"
+    ]
+  }
+}
