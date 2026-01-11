@@ -20,6 +20,11 @@ uv sync  # Install all Python dependencies
 cd backend && uv run uvicorn app:app --reload --port 8000
 ```
 
+### Running on Windows (Git Bash)
+```bash
+cd /c/repo/starting-ragchatbot-codebase/backend && /c/repo/starting-ragchatbot-codebase/.venv/Scripts/python.exe -m uvicorn app:app --reload --port 8000
+```
+
 ### Environment Setup
 Create `.env` in root directory:
 ```

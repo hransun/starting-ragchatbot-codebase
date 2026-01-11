@@ -28,8 +28,13 @@ function setupEventListeners() {
     chatInput.addEventListener('keypress', (e) => {
         if (e.key === 'Enter') sendMessage();
     });
-    
-    
+
+    // New Chat button
+    const newChatButton = document.getElementById('newChatButton');
+    if (newChatButton) {
+        newChatButton.addEventListener('click', handleNewChat);
+    }
+
     // Suggested questions
     document.querySelectorAll('.suggested-item').forEach(button => {
         button.addEventListener('click', (e) => {
@@ -122,10 +127,24 @@ function addMessage(content, type, sources = null, isWelcome = false) {
     let html = `<div class="message-content">${displayContent}</div>`;
     
     if (sources && sources.length > 0) {
+        const sourceItems = sources.map(source => {
+            // Handle both object format {text, link} and legacy string format
+            const sourceText = typeof source === 'string' ? source : source.text;
+            const sourceLink = typeof source === 'object' ? source.link : null;
+
+            if (sourceLink) {
+                // Clickable link (opens in new tab)
+                return `<a href="${sourceLink}" target="_blank" rel="noopener noreferrer">${escapeHtml(sourceText)}</a>`;
+            } else {
+                // Plain text (no link available)
+                return escapeHtml(sourceText);
+            }
+        }).join(', ');
+
         html += `
             <details class="sources-collapsible">
                 <summary class="sources-header">Sources</summary>
-                <div class="sources-content">${sources.join(', ')}</div>
+                <div class="sources-content">${sourceItems}</div>
             </details>
         `;
     }
@@ -150,6 +169,31 @@ async function createNewSession() {
     currentSessionId = null;
     chatMessages.innerHTML = '';
     addMessage('Welcome to the Course Materials Assistant! I can help you with questions about courses, lessons and specific content. What would you like to know?', 'assistant', null, true);
+}
+
+function handleNewChat() {
+    // Visual feedback: disable button temporarily
+    const newChatButton = document.getElementById('newChatButton');
+    if (newChatButton) {
+        newChatButton.disabled = true;
+        newChatButton.style.opacity = '0.5';
+    }
+
+    // Create new session (clears UI and resets sessionId)
+    createNewSession();
+
+    // Focus on input for immediate use
+    if (chatInput) {
+        chatInput.focus();
+    }
+
+    // Re-enable button after brief delay
+    setTimeout(() => {
+        if (newChatButton) {
+            newChatButton.disabled = false;
+            newChatButton.style.opacity = '1';
+        }
+    }, 300);
 }
 
 // Load course statistics
