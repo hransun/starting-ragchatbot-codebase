@@ -29,3 +29,7 @@ uploads/
 # OS
 .DS_Store
 Thumbs.db
+
+# Claude temp files
+tmpclaude-*
+.playwright-mcp/
