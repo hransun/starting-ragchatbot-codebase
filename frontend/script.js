@@ -5,7 +5,28 @@ const API_URL = '/api';
 let currentSessionId = null;
 
 // DOM elements
-let chatMessages, chatInput, sendButton, totalCourses, courseTitles;
+let chatMessages, chatInput, sendButton, totalCourses, courseTitles, themeToggle;
+
+// Theme Management
+function initTheme() {
+    // Check for saved theme preference, default to dark
+    const savedTheme = localStorage.getItem('theme') || 'dark';
+    applyTheme(savedTheme);
+}
+
+function applyTheme(theme) {
+    document.documentElement.setAttribute('data-theme', theme);
+    localStorage.setItem('theme', theme);
+}
+
+function toggleTheme() {
+    const currentTheme = document.documentElement.getAttribute('data-theme') || 'dark';
+    const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+    applyTheme(newTheme);
+}
+
+// Initialize theme before DOM content loads to prevent flash
+initTheme();
 
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
@@ -15,7 +36,8 @@ document.addEventListener('DOMContentLoaded', () => {
     sendButton = document.getElementById('sendButton');
     totalCourses = document.getElementById('totalCourses');
     courseTitles = document.getElementById('courseTitles');
-    
+    themeToggle = document.getElementById('themeToggle');
+
     setupEventListeners();
     createNewSession();
     loadCourseStats();
@@ -28,6 +50,11 @@ function setupEventListeners() {
     chatInput.addEventListener('keypress', (e) => {
         if (e.key === 'Enter') sendMessage();
     });
+
+    // Theme toggle
+    if (themeToggle) {
+        themeToggle.addEventListener('click', toggleTheme);
+    }
 
     // New Chat button
     const newChatButton = document.getElementById('newChatButton');
