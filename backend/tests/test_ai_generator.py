@@ -1,4 +1,5 @@
 """Tests for AIGenerator tool calling functionality"""
+
 import pytest
 from unittest.mock import Mock, patch, MagicMock
 import sys
@@ -15,7 +16,7 @@ class TestAIGeneratorToolCalling:
     @pytest.fixture
     def ai_generator(self):
         """Create AIGenerator with mocked client"""
-        with patch('ai_generator.anthropic.Anthropic') as mock_anthropic:
+        with patch("ai_generator.anthropic.Anthropic") as mock_anthropic:
             generator = AIGenerator(api_key="test_key", model="test-model")
             return generator, mock_anthropic
 
@@ -27,9 +28,7 @@ class TestAIGeneratorToolCalling:
         tools = [{"name": "search_course_content", "description": "Search"}]
 
         generator.generate_response(
-            query="What is MCP?",
-            tools=tools,
-            tool_manager=None
+            query="What is MCP?", tools=tools, tool_manager=None
         )
 
         # Verify API was called with tools
@@ -44,16 +43,14 @@ class TestAIGeneratorToolCalling:
 
         tools = [{"name": "search_course_content", "description": "Search"}]
 
-        generator.generate_response(
-            query="test",
-            tools=tools,
-            tool_manager=None
-        )
+        generator.generate_response(query="test", tools=tools, tool_manager=None)
 
         call_args = generator.client.messages.create.call_args
         assert call_args.kwargs["tool_choice"] == {"type": "auto"}
 
-    def test_tool_use_detected(self, ai_generator, mock_anthropic_response_with_tool_use, mock_tool_manager):
+    def test_tool_use_detected(
+        self, ai_generator, mock_anthropic_response_with_tool_use, mock_tool_manager
+    ):
         """Test that tool use is detected from response"""
         generator, _ = ai_generator
 
@@ -66,24 +63,23 @@ class TestAIGeneratorToolCalling:
 
         generator.client.messages.create.side_effect = [
             mock_anthropic_response_with_tool_use,
-            text_response
+            text_response,
         ]
 
         tools = [{"name": "search_course_content", "description": "Search"}]
 
         result = generator.generate_response(
-            query="What is MCP?",
-            tools=tools,
-            tool_manager=mock_tool_manager
+            query="What is MCP?", tools=tools, tool_manager=mock_tool_manager
         )
 
         # Verify tool_manager.execute_tool was called
         mock_tool_manager.execute_tool.assert_called_once_with(
-            "search_course_content",
-            query="MCP architecture"
+            "search_course_content", query="MCP architecture"
         )
 
-    def test_tool_execution_result_sent_back(self, ai_generator, mock_anthropic_response_with_tool_use, mock_tool_manager):
+    def test_tool_execution_result_sent_back(
+        self, ai_generator, mock_anthropic_response_with_tool_use, mock_tool_manager
+    ):
         """Test that tool execution results are sent back to Claude"""
         generator, _ = ai_generator
 
@@ -95,15 +91,13 @@ class TestAIGeneratorToolCalling:
 
         generator.client.messages.create.side_effect = [
             mock_anthropic_response_with_tool_use,
-            text_response
+            text_response,
         ]
 
         tools = [{"name": "search_course_content", "description": "Search"}]
 
         generator.generate_response(
-            query="What is MCP?",
-            tools=tools,
-            tool_manager=mock_tool_manager
+            query="What is MCP?", tools=tools, tool_manager=mock_tool_manager
         )
 
         # Second API call should include tool results
@@ -134,14 +128,16 @@ class TestAIGeneratorToolCalling:
         call_args = generator.client.messages.create.call_args
         assert "tools" not in call_args.kwargs
 
-    def test_conversation_history_included(self, ai_generator, mock_anthropic_response_text):
+    def test_conversation_history_included(
+        self, ai_generator, mock_anthropic_response_text
+    ):
         """Test that conversation history is included in system prompt"""
         generator, _ = ai_generator
         generator.client.messages.create.return_value = mock_anthropic_response_text
 
         generator.generate_response(
             query="Follow up question",
-            conversation_history="User: Hi\nAssistant: Hello!"
+            conversation_history="User: Hi\nAssistant: Hello!",
         )
 
         call_args = generator.client.messages.create.call_args
@@ -167,7 +163,7 @@ class TestAIGeneratorSequentialToolCalling:
     @pytest.fixture
     def ai_generator(self):
         """Create AIGenerator with mocked client"""
-        with patch('ai_generator.anthropic.Anthropic') as mock_anthropic:
+        with patch("ai_generator.anthropic.Anthropic") as mock_anthropic:
             generator = AIGenerator(api_key="test_key", model="test-model")
             return generator
 
@@ -178,7 +174,9 @@ class TestAIGeneratorSequentialToolCalling:
         manager.execute_tool = Mock(return_value="Tool result content")
         return manager
 
-    def _create_tool_use_response(self, tool_name="search_course_content", tool_id="tool_1", tool_input=None):
+    def _create_tool_use_response(
+        self, tool_name="search_course_content", tool_id="tool_1", tool_input=None
+    ):
         """Helper to create a mock tool_use response"""
         response = Mock()
         response.stop_reason = "tool_use"
@@ -211,15 +209,13 @@ class TestAIGeneratorSequentialToolCalling:
         # API call 1: tool_use, API call 2: text response
         generator.client.messages.create.side_effect = [
             self._create_tool_use_response(),
-            self._create_text_response("Answer after one tool call")
+            self._create_text_response("Answer after one tool call"),
         ]
 
         tools = [{"name": "search_course_content", "description": "Search"}]
 
         result = generator.generate_response(
-            query="What is MCP?",
-            tools=tools,
-            tool_manager=mock_tool_manager
+            query="What is MCP?", tools=tools, tool_manager=mock_tool_manager
         )
 
         # Verify: 2 API calls, 1 tool execution
@@ -233,9 +229,13 @@ class TestAIGeneratorSequentialToolCalling:
 
         # API call 1: tool_use, API call 2: tool_use, API call 3: text
         generator.client.messages.create.side_effect = [
-            self._create_tool_use_response(tool_id="tool_1", tool_input={"query": "MCP"}),
-            self._create_tool_use_response(tool_id="tool_2", tool_input={"query": "Computer Use"}),
-            self._create_text_response("Comparison of both courses")
+            self._create_tool_use_response(
+                tool_id="tool_1", tool_input={"query": "MCP"}
+            ),
+            self._create_tool_use_response(
+                tool_id="tool_2", tool_input={"query": "Computer Use"}
+            ),
+            self._create_text_response("Comparison of both courses"),
         ]
 
         tools = [{"name": "search_course_content", "description": "Search"}]
@@ -243,7 +243,7 @@ class TestAIGeneratorSequentialToolCalling:
         result = generator.generate_response(
             query="Compare MCP and Computer Use courses",
             tools=tools,
-            tool_manager=mock_tool_manager
+            tool_manager=mock_tool_manager,
         )
 
         # Verify: 3 API calls, 2 tool executions
@@ -269,9 +269,7 @@ class TestAIGeneratorSequentialToolCalling:
         tools = [{"name": "search_course_content", "description": "Search"}]
 
         result = generator.generate_response(
-            query="Complex query",
-            tools=tools,
-            tool_manager=mock_tool_manager
+            query="Complex query", tools=tools, tool_manager=mock_tool_manager
         )
 
         # Verify: MAX_TOOL_ROUNDS tool executions
@@ -292,15 +290,13 @@ class TestAIGeneratorSequentialToolCalling:
 
         generator.client.messages.create.side_effect = [
             self._create_tool_use_response(),
-            self._create_text_response("Response after tool error")
+            self._create_text_response("Response after tool error"),
         ]
 
         tools = [{"name": "search_course_content", "description": "Search"}]
 
         result = generator.generate_response(
-            query="test",
-            tools=tools,
-            tool_manager=mock_tool_manager
+            query="test", tools=tools, tool_manager=mock_tool_manager
         )
 
         # Verify tool was attempted
@@ -321,14 +317,14 @@ class TestAIGeneratorSequentialToolCalling:
         generator = ai_generator
 
         # API returns text without tool use
-        generator.client.messages.create.return_value = self._create_text_response("Direct answer")
+        generator.client.messages.create.return_value = self._create_text_response(
+            "Direct answer"
+        )
 
         tools = [{"name": "search_course_content", "description": "Search"}]
 
         result = generator.generate_response(
-            query="What is 2+2?",
-            tools=tools,
-            tool_manager=mock_tool_manager
+            query="What is 2+2?", tools=tools, tool_manager=mock_tool_manager
         )
 
         # Verify: 1 API call, 0 tool executions
@@ -343,15 +339,13 @@ class TestAIGeneratorSequentialToolCalling:
         generator.client.messages.create.side_effect = [
             self._create_tool_use_response(tool_id="tool_1"),
             self._create_tool_use_response(tool_id="tool_2"),
-            self._create_text_response("Final")
+            self._create_text_response("Final"),
         ]
 
         tools = [{"name": "search_course_content", "description": "Search"}]
 
         generator.generate_response(
-            query="test query",
-            tools=tools,
-            tool_manager=mock_tool_manager
+            query="test query", tools=tools, tool_manager=mock_tool_manager
         )
 
         # Check third API call has accumulated messages
@@ -373,7 +367,7 @@ class TestAIGeneratorHelperMethods:
     @pytest.fixture
     def ai_generator(self):
         """Create AIGenerator with mocked client"""
-        with patch('ai_generator.anthropic.Anthropic') as mock_anthropic:
+        with patch("ai_generator.anthropic.Anthropic") as mock_anthropic:
             generator = AIGenerator(api_key="test_key", model="test-model")
             return generator
 

@@ -60,16 +60,15 @@ All responses must be:
         self.model = model
 
         # Pre-build base API parameters
-        self.base_params = {
-            "model": self.model,
-            "temperature": 0,
-            "max_tokens": 800
-        }
+        self.base_params = {"model": self.model, "temperature": 0, "max_tokens": 800}
 
-    def generate_response(self, query: str,
-                         conversation_history: Optional[str] = None,
-                         tools: Optional[List] = None,
-                         tool_manager=None) -> str:
+    def generate_response(
+        self,
+        query: str,
+        conversation_history: Optional[str] = None,
+        tools: Optional[List] = None,
+        tool_manager=None,
+    ) -> str:
         """
         Generate AI response with optional tool usage and conversation context.
         Supports up to MAX_TOOL_ROUNDS sequential tool calls.
@@ -102,7 +101,7 @@ All responses must be:
             api_params = {
                 **self.base_params,
                 "messages": messages,
-                "system": system_content
+                "system": system_content,
             }
 
             # Add tools if available
@@ -137,7 +136,7 @@ All responses must be:
         final_params = {
             **self.base_params,
             "messages": messages,
-            "system": system_content
+            "system": system_content,
         }
 
         final_response = self.client.messages.create(**final_params)
@@ -160,23 +159,24 @@ All responses must be:
         for block in response.content:
             if block.type == "tool_use":
                 try:
-                    result = tool_manager.execute_tool(
-                        block.name,
-                        **block.input
+                    result = tool_manager.execute_tool(block.name, **block.input)
+                    tool_results.append(
+                        {
+                            "type": "tool_result",
+                            "tool_use_id": block.id,
+                            "content": result,
+                        }
                     )
-                    tool_results.append({
-                        "type": "tool_result",
-                        "tool_use_id": block.id,
-                        "content": result
-                    })
                 except Exception as e:
                     has_error = True
-                    tool_results.append({
-                        "type": "tool_result",
-                        "tool_use_id": block.id,
-                        "content": f"Error executing tool: {str(e)}",
-                        "is_error": True
-                    })
+                    tool_results.append(
+                        {
+                            "type": "tool_result",
+                            "tool_use_id": block.id,
+                            "content": f"Error executing tool: {str(e)}",
+                            "is_error": True,
+                        }
+                    )
 
         return tool_results, has_error
 
@@ -192,6 +192,6 @@ All responses must be:
         """
         if response.content:
             for block in response.content:
-                if hasattr(block, 'text'):
+                if hasattr(block, "text"):
                     return block.text
         return "Unable to generate a response."

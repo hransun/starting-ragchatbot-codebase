@@ -1,4 +1,5 @@
 """Tests for CourseSearchTool execute method"""
+
 import pytest
 from unittest.mock import Mock
 import sys
@@ -21,9 +22,7 @@ class TestCourseSearchToolExecute:
 
         # Verify search was called
         mock_vector_store.search.assert_called_once_with(
-            query="What is MCP?",
-            course_name=None,
-            lesson_number=None
+            query="What is MCP?", course_name=None, lesson_number=None
         )
 
         # Verify result contains content
@@ -37,9 +36,7 @@ class TestCourseSearchToolExecute:
         result = tool.execute(query="architecture", course_name="MCP")
 
         mock_vector_store.search.assert_called_once_with(
-            query="architecture",
-            course_name="MCP",
-            lesson_number=None
+            query="architecture", course_name="MCP", lesson_number=None
         )
 
     def test_execute_with_lesson_filter(self, mock_vector_store, mock_search_results):
@@ -49,9 +46,7 @@ class TestCourseSearchToolExecute:
         result = tool.execute(query="introduction", lesson_number=1)
 
         mock_vector_store.search.assert_called_once_with(
-            query="introduction",
-            course_name=None,
-            lesson_number=1
+            query="introduction", course_name=None, lesson_number=1
         )
 
     def test_execute_with_both_filters(self, mock_vector_store, mock_search_results):
@@ -61,9 +56,7 @@ class TestCourseSearchToolExecute:
         result = tool.execute(query="content", course_name="MCP", lesson_number=2)
 
         mock_vector_store.search.assert_called_once_with(
-            query="content",
-            course_name="MCP",
-            lesson_number=2
+            query="content", course_name="MCP", lesson_number=2
         )
 
     def test_execute_empty_results(self, mock_vector_store, mock_empty_results):
@@ -75,7 +68,9 @@ class TestCourseSearchToolExecute:
 
         assert "No relevant content found" in result
 
-    def test_execute_empty_results_with_course_filter(self, mock_vector_store, mock_empty_results):
+    def test_execute_empty_results_with_course_filter(
+        self, mock_vector_store, mock_empty_results
+    ):
         """Test empty results message includes course filter info"""
         mock_vector_store.search.return_value = mock_empty_results
         tool = CourseSearchTool(mock_vector_store)
@@ -94,7 +89,9 @@ class TestCourseSearchToolExecute:
 
         assert "Search error" in result or "Connection failed" in result
 
-    def test_format_results_includes_headers(self, mock_vector_store, mock_search_results):
+    def test_format_results_includes_headers(
+        self, mock_vector_store, mock_search_results
+    ):
         """Test that results include course/lesson headers"""
         tool = CourseSearchTool(mock_vector_store)
 
@@ -112,7 +109,9 @@ class TestCourseSearchToolExecute:
 
         # Check sources were stored
         assert len(tool.last_sources) == 2
-        assert tool.last_sources[0]["text"] == "MCP: Build Rich-Context AI Apps - Lesson 1"
+        assert (
+            tool.last_sources[0]["text"] == "MCP: Build Rich-Context AI Apps - Lesson 1"
+        )
 
     def test_sources_include_links(self, mock_vector_store, mock_search_results):
         """Test that sources include links when available"""

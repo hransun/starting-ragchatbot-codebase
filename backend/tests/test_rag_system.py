@@ -1,4 +1,5 @@
 """Tests for RAGSystem end-to-end query handling"""
+
 import pytest
 from unittest.mock import Mock, patch, MagicMock
 import sys
@@ -27,22 +28,28 @@ class TestRAGSystemQuery:
     @pytest.fixture
     def rag_system(self, mock_config):
         """Create RAGSystem with mocked dependencies"""
-        with patch('rag_system.DocumentProcessor'), \
-             patch('rag_system.VectorStore') as mock_vs, \
-             patch('rag_system.AIGenerator') as mock_ai, \
-             patch('rag_system.SessionManager') as mock_session:
+        with (
+            patch("rag_system.DocumentProcessor"),
+            patch("rag_system.VectorStore") as mock_vs,
+            patch("rag_system.AIGenerator") as mock_ai,
+            patch("rag_system.SessionManager") as mock_session,
+        ):
 
             # Setup mock vector store
             mock_vs_instance = Mock()
             mock_vs_instance.search = Mock()
             mock_vs_instance.get_course_link = Mock(return_value="https://example.com")
-            mock_vs_instance.get_lesson_link = Mock(return_value="https://example.com/lesson1")
+            mock_vs_instance.get_lesson_link = Mock(
+                return_value="https://example.com/lesson1"
+            )
             mock_vs_instance.get_course_outline = Mock(return_value=None)
             mock_vs.return_value = mock_vs_instance
 
             # Setup mock AI generator
             mock_ai_instance = Mock()
-            mock_ai_instance.generate_response = Mock(return_value="Test response about MCP")
+            mock_ai_instance.generate_response = Mock(
+                return_value="Test response about MCP"
+            )
             mock_ai.return_value = mock_ai_instance
 
             # Setup mock session manager
@@ -52,6 +59,7 @@ class TestRAGSystemQuery:
             mock_session.return_value = mock_session_instance
 
             from rag_system import RAGSystem
+
             system = RAGSystem(mock_config)
 
             return system, mock_ai_instance, mock_session_instance
@@ -113,9 +121,7 @@ class TestRAGSystemQuery:
         system.query("What is MCP?", session_id="session_1")
 
         mock_session.add_exchange.assert_called_once_with(
-            "session_1",
-            "What is MCP?",
-            "Test response about MCP"
+            "session_1", "What is MCP?", "Test response about MCP"
         )
 
     def test_query_resets_sources_after_retrieval(self, rag_system):
@@ -124,6 +130,7 @@ class TestRAGSystemQuery:
 
         # Replace reset_sources with a mock to track calls
         from unittest.mock import Mock
+
         system.tool_manager.reset_sources = Mock()
 
         system.query("What is MCP?")
@@ -150,36 +157,45 @@ class TestRAGSystemToolIntegration:
 
     def test_search_tool_registered(self, mock_config):
         """Test that CourseSearchTool is registered"""
-        with patch('rag_system.DocumentProcessor'), \
-             patch('rag_system.VectorStore'), \
-             patch('rag_system.AIGenerator'), \
-             patch('rag_system.SessionManager'):
+        with (
+            patch("rag_system.DocumentProcessor"),
+            patch("rag_system.VectorStore"),
+            patch("rag_system.AIGenerator"),
+            patch("rag_system.SessionManager"),
+        ):
 
             from rag_system import RAGSystem
+
             system = RAGSystem(mock_config)
 
             assert "search_course_content" in system.tool_manager.tools
 
     def test_outline_tool_registered(self, mock_config):
         """Test that CourseOutlineTool is registered"""
-        with patch('rag_system.DocumentProcessor'), \
-             patch('rag_system.VectorStore'), \
-             patch('rag_system.AIGenerator'), \
-             patch('rag_system.SessionManager'):
+        with (
+            patch("rag_system.DocumentProcessor"),
+            patch("rag_system.VectorStore"),
+            patch("rag_system.AIGenerator"),
+            patch("rag_system.SessionManager"),
+        ):
 
             from rag_system import RAGSystem
+
             system = RAGSystem(mock_config)
 
             assert "get_course_outline" in system.tool_manager.tools
 
     def test_tool_definitions_available(self, mock_config):
         """Test that tool definitions are available for API"""
-        with patch('rag_system.DocumentProcessor'), \
-             patch('rag_system.VectorStore'), \
-             patch('rag_system.AIGenerator'), \
-             patch('rag_system.SessionManager'):
+        with (
+            patch("rag_system.DocumentProcessor"),
+            patch("rag_system.VectorStore"),
+            patch("rag_system.AIGenerator"),
+            patch("rag_system.SessionManager"),
+        ):
 
             from rag_system import RAGSystem
+
             system = RAGSystem(mock_config)
 
             definitions = system.tool_manager.get_tool_definitions()
@@ -209,16 +225,21 @@ class TestRAGSystemErrorHandling:
 
     def test_query_handles_ai_exception(self, mock_config):
         """Test that query handles AI generator exceptions"""
-        with patch('rag_system.DocumentProcessor'), \
-             patch('rag_system.VectorStore'), \
-             patch('rag_system.AIGenerator') as mock_ai, \
-             patch('rag_system.SessionManager'):
+        with (
+            patch("rag_system.DocumentProcessor"),
+            patch("rag_system.VectorStore"),
+            patch("rag_system.AIGenerator") as mock_ai,
+            patch("rag_system.SessionManager"),
+        ):
 
             mock_ai_instance = Mock()
-            mock_ai_instance.generate_response = Mock(side_effect=Exception("API Error"))
+            mock_ai_instance.generate_response = Mock(
+                side_effect=Exception("API Error")
+            )
             mock_ai.return_value = mock_ai_instance
 
             from rag_system import RAGSystem
+
             system = RAGSystem(mock_config)
 
             # Should raise or handle gracefully

@@ -1,4 +1,5 @@
 """Shared fixtures for RAG chatbot tests"""
+
 import pytest
 from unittest.mock import Mock, MagicMock
 from dataclasses import dataclass
@@ -18,34 +19,35 @@ def mock_search_results():
     return SearchResults(
         documents=[
             "MCP stands for Model Context Protocol. It enables AI applications to connect to tools.",
-            "The MCP architecture consists of clients and servers that communicate via JSON-RPC."
+            "The MCP architecture consists of clients and servers that communicate via JSON-RPC.",
         ],
         metadata=[
-            {"course_title": "MCP: Build Rich-Context AI Apps", "lesson_number": 1, "chunk_index": 0},
-            {"course_title": "MCP: Build Rich-Context AI Apps", "lesson_number": 2, "chunk_index": 5}
+            {
+                "course_title": "MCP: Build Rich-Context AI Apps",
+                "lesson_number": 1,
+                "chunk_index": 0,
+            },
+            {
+                "course_title": "MCP: Build Rich-Context AI Apps",
+                "lesson_number": 2,
+                "chunk_index": 5,
+            },
         ],
-        distances=[0.25, 0.35]
+        distances=[0.25, 0.35],
     )
 
 
 @pytest.fixture
 def mock_empty_results():
     """Create empty search results"""
-    return SearchResults(
-        documents=[],
-        metadata=[],
-        distances=[]
-    )
+    return SearchResults(documents=[], metadata=[], distances=[])
 
 
 @pytest.fixture
 def mock_error_results():
     """Create search results with error"""
     return SearchResults(
-        documents=[],
-        metadata=[],
-        distances=[],
-        error="Search error: Connection failed"
+        documents=[], metadata=[], distances=[], error="Search error: Connection failed"
     )
 
 
@@ -56,15 +58,17 @@ def mock_vector_store(mock_search_results):
     store.search = Mock(return_value=mock_search_results)
     store.get_course_link = Mock(return_value="https://example.com/course")
     store.get_lesson_link = Mock(return_value="https://example.com/course/lesson1")
-    store.get_course_outline = Mock(return_value={
-        "title": "MCP: Build Rich-Context AI Apps",
-        "course_link": "https://example.com/course",
-        "instructor": "Test Instructor",
-        "lessons": [
-            {"lesson_number": 0, "lesson_title": "Introduction"},
-            {"lesson_number": 1, "lesson_title": "Why MCP"},
-        ]
-    })
+    store.get_course_outline = Mock(
+        return_value={
+            "title": "MCP: Build Rich-Context AI Apps",
+            "course_link": "https://example.com/course",
+            "instructor": "Test Instructor",
+            "lessons": [
+                {"lesson_number": 0, "lesson_title": "Introduction"},
+                {"lesson_number": 1, "lesson_title": "Why MCP"},
+            ],
+        }
+    )
     return store
 
 
@@ -72,20 +76,22 @@ def mock_vector_store(mock_search_results):
 def mock_tool_manager():
     """Create a mock ToolManager"""
     manager = Mock()
-    manager.execute_tool = Mock(return_value="[MCP Course - Lesson 1]\nMCP content here...")
-    manager.get_tool_definitions = Mock(return_value=[
-        {
-            "name": "search_course_content",
-            "description": "Search course materials",
-            "input_schema": {
-                "type": "object",
-                "properties": {
-                    "query": {"type": "string"}
+    manager.execute_tool = Mock(
+        return_value="[MCP Course - Lesson 1]\nMCP content here..."
+    )
+    manager.get_tool_definitions = Mock(
+        return_value=[
+            {
+                "name": "search_course_content",
+                "description": "Search course materials",
+                "input_schema": {
+                    "type": "object",
+                    "properties": {"query": {"type": "string"}},
+                    "required": ["query"],
                 },
-                "required": ["query"]
             }
-        }
-    ])
+        ]
+    )
     manager.get_last_sources = Mock(return_value=[])
     manager.reset_sources = Mock()
     return manager
