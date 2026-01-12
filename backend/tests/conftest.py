@@ -1,7 +1,7 @@
 """Shared fixtures for RAG chatbot tests"""
 
 import pytest
-from unittest.mock import Mock, MagicMock
+from unittest.mock import Mock, MagicMock, patch
 from dataclasses import dataclass
 from typing import List, Dict, Any, Optional
 import sys
@@ -11,6 +11,148 @@ import os
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from vector_store import SearchResults
+
+
+# ============================================================================
+# API Testing Fixtures
+# ============================================================================
+
+@pytest.fixture
+def mock_rag_system():
+    """Create a mock RAGSystem for API tests"""
+    rag = Mock()
+
+    # Mock query method
+    rag.query = Mock(return_value=(
+        "MCP is a protocol for connecting AI applications to tools.",
+        [{"text": "MCP Course - Lesson 1", "link": "https://example.com/mcp"}]
+    ))
+
+    # Mock session manager
+    rag.session_manager = Mock()
+    rag.session_manager.create_session = Mock(return_value="session_123")
+
+    # Mock get_course_analytics
+    rag.get_course_analytics = Mock(return_value={
+        "total_courses": 3,
+        "course_titles": ["MCP Course", "Computer Use", "Claude API"]
+    })
+
+    # Mock add_course_folder
+    rag.add_course_folder = Mock(return_value=(2, 50))
+
+    return rag
+
+
+@pytest.fixture
+def mock_config():
+    """Create mock configuration for tests"""
+    config = Mock()
+    config.CHUNK_SIZE = 800
+    config.CHUNK_OVERLAP = 100
+    config.CHROMA_PATH = "./test_chroma"
+    config.EMBEDDING_MODEL = "all-MiniLM-L6-v2"
+    config.MAX_RESULTS = 5
+    config.ANTHROPIC_API_KEY = "test_key"
+    config.ANTHROPIC_MODEL = "test-model"
+    config.MAX_HISTORY = 2
+    return config
+
+
+@pytest.fixture
+def test_app(mock_rag_system):
+    """Create a test FastAPI app without static file mounting"""
+    from fastapi import FastAPI, HTTPException
+    from pydantic import BaseModel
+    from typing import List, Optional
+
+    app = FastAPI(title="Course Materials RAG System - Test")
+
+    # Pydantic models (same as app.py)
+    class QueryRequest(BaseModel):
+        query: str
+        session_id: Optional[str] = None
+
+    class SourceItem(BaseModel):
+        text: str
+        link: Optional[str] = None
+
+    class QueryResponse(BaseModel):
+        answer: str
+        sources: List[SourceItem]
+        session_id: str
+
+    class CourseStats(BaseModel):
+        total_courses: int
+        course_titles: List[str]
+
+    # Store rag_system reference for the routes
+    app.state.rag_system = mock_rag_system
+
+    @app.post("/api/query", response_model=QueryResponse)
+    async def query_documents(request: QueryRequest):
+        try:
+            rag_system = app.state.rag_system
+            session_id = request.session_id
+            if not session_id:
+                session_id = rag_system.session_manager.create_session()
+
+            answer, sources = rag_system.query(request.query, session_id)
+
+            return QueryResponse(
+                answer=answer,
+                sources=sources,
+                session_id=session_id
+            )
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=str(e))
+
+    @app.get("/api/courses", response_model=CourseStats)
+    async def get_course_stats():
+        try:
+            rag_system = app.state.rag_system
+            analytics = rag_system.get_course_analytics()
+            return CourseStats(
+                total_courses=analytics["total_courses"],
+                course_titles=analytics["course_titles"]
+            )
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=str(e))
+
+    @app.get("/")
+    async def root():
+        return {"status": "ok", "message": "RAG System API"}
+
+    return app
+
+
+@pytest.fixture
+def test_client(test_app):
+    """Create a test client for API testing"""
+    from starlette.testclient import TestClient
+    return TestClient(test_app)
+
+
+# ============================================================================
+# Sample Data Fixtures
+# ============================================================================
+
+@pytest.fixture
+def sample_query_request():
+    """Sample query request data"""
+    return {
+        "query": "What is MCP?",
+        "session_id": None
+    }
+
+
+@pytest.fixture
+def sample_query_with_session():
+    """Sample query request with session ID"""
+    return {
+        "query": "Tell me more about lesson 2",
+        "session_id": "session_existing_123"
+    }
 
 
 @pytest.fixture
